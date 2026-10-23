@@ -56,16 +56,16 @@ class WorkflowForegroundService : Service() {
             val manager = getSystemService(NotificationManager::class.java)
             // 进度渠道低优先级（静默常驻）；结果渠道高优先级（完成/失败可感知）
             manager.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "Workflow Background Service", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "Shows background workflow execution progress"
+                NotificationChannel(CHANNEL_ID, "工作流后台运行", NotificationManager.IMPORTANCE_LOW).apply {
+                    description = "展示工作流后台执行进度"
                     enableVibration(false)
                     setSound(null, null)
                     lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 },
             )
             manager.createNotificationChannel(
-                NotificationChannel(RESULT_CHANNEL_ID, "Workflow Results", NotificationManager.IMPORTANCE_HIGH).apply {
-                    description = "Notifications when workflows complete, fail, or stop"
+                NotificationChannel(RESULT_CHANNEL_ID, "工作流结果", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "工作流运行完成、失败或被停止时的提醒"
                     lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 },
             )
@@ -178,8 +178,8 @@ class WorkflowForegroundService : Service() {
 
     private fun runningNotification(): Notification = NotificationCompat.Builder(this, CHANNEL_ID)
         .setSmallIcon(R.drawable.taixu_notification)
-        .setContentTitle("Workflow Running")
-        .setContentText("Running in background")
+        .setContentTitle("工作流运行中")
+        .setContentText("后台保活进行中")
         .setOngoing(true)
         .setOnlyAlertOnce(true)
         .setAutoCancel(false)
@@ -192,7 +192,7 @@ class WorkflowForegroundService : Service() {
         val nodeTitle = active?.let { (id, _) ->
             state.definition.nodes.firstOrNull { it.id == id }?.title ?: id
         }.orEmpty()
-        val detail = active?.value?.progressMessage?.takeIf { it.isNotBlank() } ?: "Running"
+        val detail = active?.value?.progressMessage?.takeIf { it.isNotBlank() } ?: "运行中"
         val stopPending = PendingIntent.getService(
             this,
             runNotificationId(state.executionId),
@@ -203,7 +203,7 @@ class WorkflowForegroundService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.taixu_notification)
-            .setContentTitle("TaiXu · ${state.definition.name}")
+            .setContentTitle("太墟 · ${state.definition.name}")
             .setContentText(if (nodeTitle.isNotBlank()) "$nodeTitle · $detail" else detail)
             .setContentIntent(openRunIntent(state.executionId))
             .setOngoing(true)
@@ -223,13 +223,13 @@ class WorkflowForegroundService : Service() {
 
     private fun terminalNotification(state: WorkflowRuntimeState): Notification {
         val (title, text) = when (state.status) {
-            WorkflowRunStatus.SUCCESS -> "Workflow Completed" to "${state.definition.name} completed all nodes successfully"
-            WorkflowRunStatus.FAILED -> "Workflow Failed" to "${state.definition.name}：${state.error ?: "Execution failed"}"
-            else -> "Workflow Stopped" to "${state.definition.name}：${state.error ?: "Cancelled"}"
+            WorkflowRunStatus.SUCCESS -> "工作流完成" to "${state.definition.name} 全部节点执行成功"
+            WorkflowRunStatus.FAILED -> "工作流失败" to "${state.definition.name}：${state.error ?: "执行失败"}"
+            else -> "工作流已停止" to "${state.definition.name}：${state.error ?: "已取消"}"
         }
         return NotificationCompat.Builder(this, RESULT_CHANNEL_ID)
             .setSmallIcon(R.drawable.taixu_notification)
-            .setContentTitle("TaiXu · $title")
+            .setContentTitle("太墟 · $title")
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(openRunIntent(state.executionId))

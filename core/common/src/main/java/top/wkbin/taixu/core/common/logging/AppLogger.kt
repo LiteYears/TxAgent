@@ -91,34 +91,34 @@ class AppLogger(
         return if (publicFile != null && publicFile.exists()) {
             publicFile.absolutePath
         } else if (Environment.isExternalStorageManager()) {
-            "${publicFile?.absolutePath} (not created yet)"
+            "${publicFile?.absolutePath}（尚未创建）"
         } else {
-            fallbackLogFile(AGENT_LOG_FILE).absolutePath + " (All files access not granted)"
+            fallbackLogFile(AGENT_LOG_FILE).absolutePath + "（未授予所有文件访问）"
         }
     }
 
     fun readAgentLogs(maxChars: Int = 100_000): String = runCatching {
         val file = existingLogFile(AGENT_LOG_FILE)
-            ?: return@runCatching "No agent local logs available"
+            ?: return@runCatching "暂无智能体本地日志"
         val text = safe(file.readText(Charsets.UTF_8))
         when {
-            text.isEmpty() -> "No agent local logs available"
+            text.isEmpty() -> "暂无智能体本地日志"
             text.length > maxChars -> text.takeLast(maxChars)
             else -> text
         }
-    }.getOrDefault("Failed to read logs")
+    }.getOrDefault("读取日志失败")
 
-    /** General runtime logs */
+    /** 运行日志（Bot 编排/群聊分流等非 Agent 标签日志落在这里）。 */
     fun readGeneralLogs(maxChars: Int = 100_000): String = runCatching {
         val file = existingLogFile(GENERAL_LOG_FILE)
-            ?: return@runCatching "No runtime logs available"
+            ?: return@runCatching "暂无运行日志"
         val text = safe(file.readText(Charsets.UTF_8))
         when {
-            text.isEmpty() -> "No runtime logs available"
+            text.isEmpty() -> "暂无运行日志"
             text.length > maxChars -> text.takeLast(maxChars)
             else -> text
         }
-    }.getOrDefault("Failed to read logs")
+    }.getOrDefault("读取日志失败")
 
     fun getAgentLogSizeBytes(): Long = runCatching {
         existingLogFile(AGENT_LOG_FILE)?.length() ?: 0L

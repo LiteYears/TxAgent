@@ -127,7 +127,7 @@ class TaiXuApplication : Application(), Configuration.Provider {
                             )
                         )
                         if (imported.isNotEmpty()) {
-                            Log.i(TAG, "Skill directory auto-discovery imported ${imported.size}: ${imported.joinToString { it.name }}")
+                            Log.i(TAG, "Skill 目录自动发现并导入 ${imported.size} 个：${imported.joinToString { it.name }}")
                         }
                     }
                 }
@@ -163,15 +163,15 @@ class TaiXuApplication : Application(), Configuration.Provider {
             runCatching {
                 val recovered = harnessLoop.recoverAllInterruptedSessions()
                 if (recovered > 0) {
-                    Log.i(TAG, "Recovered $recovered interrupted Agent sessions/tasks")
+                    Log.i(TAG, "已恢复 $recovered 个被中断的 Agent 会话/任务")
                 }
             }.onFailure {
-                Log.w(TAG, "Failed to recover interrupted sessions", it)
+                Log.w(TAG, "恢复中断会话失败", it)
             }
             runCatching { botAssignmentRuntimeLazy.value.start() }
-                .onFailure { Log.w(TAG, "Failed to recover standalone assignments", it) }
+                .onFailure { Log.w(TAG, "恢复独立委派失败", it) }
             runCatching { groupChatDispatcherLazy.value.startDeliveryProcessing() }
-                .onFailure { Log.w(TAG, "Failed to recover group message delivery", it) }
+                .onFailure { Log.w(TAG, "恢复群消息分发失败", it) }
             // 工作流后台化：启动对账（把进程死亡遗留的非终态运行标为已中断）+ 通知/HUD
             // 控制器 + FGS 联动。工作流 agent 会话由工作流体系自管，已在恢复中排除。
             val workflowRunManager = workflowRunManagerLazy.value
@@ -179,7 +179,7 @@ class TaiXuApplication : Application(), Configuration.Provider {
             workflowRunUiController.start()
             workflowApprovalNotifier.start(this@TaiXuApplication)
             runCatching { workflowRunManager.reconcileInterruptedRuns() }
-                .onFailure { Log.w(TAG, "Failed to reconcile workflow startup", it) }
+                .onFailure { Log.w(TAG, "工作流启动对账失败", it) }
             launch {
                 workflowRunManager.running.collectLatest { running ->
                     if (running) {

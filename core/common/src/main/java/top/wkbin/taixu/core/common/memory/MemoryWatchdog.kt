@@ -87,16 +87,16 @@ class MemoryWatchdog(
     internal fun fire(maxBytes: Long, usedBytes: Long, ratio: Double) {
         val names = releasers.joinToString { it.name }
         log(
-            "MemoryWatchdog: Heap ${percent(ratio)} (${mb(usedBytes)}/${mb(maxBytes)}MB) exceeded high watermark, " +
-                "invoking release hooks [${names.ifBlank { "None" }}]",
+            "内存水位哨兵：堆 ${percent(ratio)}（${mb(usedBytes)}/${mb(maxBytes)}MB）越过高水位，" +
+                "执行释放钩子 [${names.ifBlank { "无" }}]",
         )
         releasers.forEach { releaser ->
             runCatching { releaser.action() }
-                .onFailure { log("MemoryWatchdog: Release hook ${releaser.name} failed: ${it.message.orEmpty()}") }
+                .onFailure { log("内存水位哨兵：释放钩子 ${releaser.name} 失败：${it.message.orEmpty()}") }
         }
         val runtime = Runtime.getRuntime()
         val afterBytes = runtime.totalMemory() - runtime.freeMemory()
-        log("MemoryWatchdog: Heap after release ${percent(afterBytes.toDouble() / maxBytes)} (${mb(afterBytes)}MB)")
+        log("内存水位哨兵：释放后堆 ${percent(afterBytes.toDouble() / maxBytes)}（${mb(afterBytes)}MB）")
     }
 
     /**

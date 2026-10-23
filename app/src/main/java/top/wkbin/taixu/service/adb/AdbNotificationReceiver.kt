@@ -38,24 +38,25 @@ class AdbNotificationReceiver : BroadcastReceiver(), KoinComponent {
                     ?.trim()
 
                 if (pairingCode.isNullOrBlank() || !pairingCode.matches(Regex("\\d{6}"))) {
-                    adbNotificationManager.showFailed("Invalid pairing code: must be 6 digits, please retry")
+                    adbNotificationManager.showFailed("配对码格式无效：必须是 6 位纯数字，请重试")
                     return
                 }
 
-                // Immediately refresh to pairing in progress state
+                // 立即刷新为配对中状态（防止通知栏 RemoteInput 转圈死锁）
                 adbNotificationManager.showPairingInProgress()
                 val pendingResult = goAsync()
                 scope.launch {
                     try {
-                        Log.i(TAG, "Received pairing code from notification, starting wireless ADB pairing…")
+                        Log.i(TAG, "从通知栏接收到配对码，正在发起无线 ADB 配对…")
                         val result = embeddedAdbManager.pair(pairingCode)
                         result.fold(
                             onSuccess = {
-                                Log.i(TAG, "Wireless ADB paired successfully via notification")
+                                Log.i(TAG, "通知栏无线 ADB 配对成功")
+                                // EmbeddedAdbManager 会自动切入 Connected 状态，并通过 StateFlow 触发 showConnected
                             },
                             onFailure = { error ->
-                                Log.w(TAG, "Wireless ADB pairing failed via notification", error)
-                                adbNotificationManager.showFailed(error.message ?: "Wireless ADB pairing failed. Please verify pairing code and retry")
+                                Log.w(TAG, "通知栏无线 ADB 配对失败", error)
+                                adbNotificationManager.showFailed(error.message ?: "无线 ADB 配对失败，请确认系统配对码并重试")
                             },
                         )
                     } finally {
@@ -69,15 +70,15 @@ class AdbNotificationReceiver : BroadcastReceiver(), KoinComponent {
                 val pendingResult = goAsync()
                 scope.launch {
                     try {
-                        Log.i(TAG, "Initiating wireless ADB connection from notification…")
+                        Log.i(TAG, "从通知栏发起无线 ADB 直接连接…")
                         val result = embeddedAdbManager.connect()
                         result.fold(
                             onSuccess = {
-                                Log.i(TAG, "Wireless ADB connected successfully via notification")
+                                Log.i(TAG, "通知栏无线 ADB 连接成功")
                             },
                             onFailure = { error ->
-                                Log.w(TAG, "Wireless ADB connection failed via notification", error)
-                                adbNotificationManager.showFailed(error.message ?: "Wireless ADB connection failed. Please verify port or pair again")
+                                Log.w(TAG, "通知栏无线 ADB 连接失败", error)
+                                adbNotificationManager.showFailed(error.message ?: "无线 ADB 连接失败，请确认端口或重新配对")
                             },
                         )
                     } finally {

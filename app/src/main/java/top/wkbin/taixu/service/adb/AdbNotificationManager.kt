@@ -56,10 +56,10 @@ class AdbNotificationManager(
         runCatching {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Wireless ADB & Debugging",
+                "无线 ADB 与调试",
                 NotificationManager.IMPORTANCE_LOW,
             ).apply {
-                description = "Notification helper for entering pairing code and connecting wireless ADB"
+                description = "用于在手机开发者选项中直接下拉输入配对码并快捷连接无线 ADB 的通知助手"
                 enableVibration(false)
                 setSound(null, null)
                 setShowBadge(false)
@@ -116,13 +116,13 @@ class AdbNotificationManager(
     fun showPairingPrompt(pairingEndpointsCount: Int = 0, connectEndpointsCount: Int = 0) {
         isManuallyDismissed = false
         val contentText = when {
-            pairingEndpointsCount > 0 -> "Pairing port discovered · Enter 6-digit pairing code below"
-            connectEndpointsCount > 0 -> "Connection port discovered · Tap Connect or enter code"
-            else -> "Searching via mDNS · Tap 'Pair device with pairing code' in Developer options"
+            pairingEndpointsCount > 0 -> "已发现配对端口 · 请在下方输入 6 位配对码"
+            connectEndpointsCount > 0 -> "已发现连接端口 · 可直接点击「连接」或输入配对码"
+            else -> "已开启 mDNS 端口探测 · 请在系统无线调试中点击「使用配对码配对设备」"
         }
 
         val notif = buildNotification(
-            title = "TaiXu · Wireless ADB Quick Pair",
+            title = "太墟 · 无线 ADB 快捷配对",
             contentText = contentText,
             isOngoing = true,
             actions = listOf(
@@ -134,12 +134,12 @@ class AdbNotificationManager(
         safeNotify(notif)
     }
 
-    /** Display pairing progress notification. */
+    /** 显示正在配对中的进度通知。 */
     fun showPairingInProgress() {
         isManuallyDismissed = false
         val notif = buildNotification(
-            title = "TaiXu · Pairing Wireless ADB…",
-            contentText = "Performing secure handshake with port (TLS + SPAKE2)…",
+            title = "太墟 · 正在配对无线 ADB…",
+            contentText = "正在与发现的端口进行安全握手 (TLS + SPAKE2)…",
             isOngoing = true,
             showProgress = true,
             actions = listOf(buildDismissAction()),
@@ -147,12 +147,12 @@ class AdbNotificationManager(
         safeNotify(notif)
     }
 
-    /** Display connecting progress notification. */
+    /** 显示正在建立连接的进度通知。 */
     fun showConnectingInProgress() {
         isManuallyDismissed = false
         val notif = buildNotification(
-            title = "TaiXu · Establishing ADB Connection…",
-            contentText = "Completing RSA authentication…",
+            title = "太墟 · 正在建立 ADB 连接…",
+            contentText = "正在完成 RSA 密钥认证…",
             isOngoing = true,
             showProgress = true,
             actions = listOf(buildDismissAction()),
@@ -160,12 +160,12 @@ class AdbNotificationManager(
         safeNotify(notif)
     }
 
-    /** Display connected notification. */
+    /** 显示已连接成功通知。 */
     fun showConnected(host: String, port: Int) {
         isManuallyDismissed = false
         val notif = buildNotification(
-            title = "TaiXu · Wireless ADB Connected",
-            contentText = "Connected to $host:$port · Tap to open workbench",
+            title = "太墟 · 无线 ADB 已连接",
+            contentText = "已连接到 $host:$port · 点击返回工作台",
             isOngoing = false,
             actions = listOf(
                 buildOpenWorkbenchAction(),
@@ -175,11 +175,11 @@ class AdbNotificationManager(
         safeNotify(notif)
     }
 
-    /** Display failed notification. */
+    /** 显示失败与重试通知。 */
     fun showFailed(errorMessage: String) {
         isManuallyDismissed = false
         val notif = buildNotification(
-            title = "TaiXu · Wireless ADB Error",
+            title = "太墟 · 无线 ADB 连接/配对异常",
             contentText = errorMessage,
             isOngoing = false,
             actions = listOf(
@@ -255,12 +255,12 @@ class AdbNotificationManager(
         )
 
         val remoteInput = RemoteInput.Builder(KEY_PAIRING_CODE)
-            .setLabel("Enter 6-digit pairing code (e.g. 123456)")
+            .setLabel("输入 6 位配对码 (例如 123456)")
             .build()
 
         return NotificationCompat.Action.Builder(
             R.drawable.taixu_notification,
-            if (isRetry) "Retry Pairing Code" else "Enter Pairing Code",
+            if (isRetry) "重试输入配对码" else "输入配对码",
             pairPendingIntent,
         ).addRemoteInput(remoteInput).build()
     }
@@ -277,7 +277,7 @@ class AdbNotificationManager(
         )
         return NotificationCompat.Action.Builder(
             R.drawable.taixu_notification,
-            "Connect",
+            "连接",
             connectPendingIntent,
         ).build()
     }
@@ -294,7 +294,7 @@ class AdbNotificationManager(
         )
         return NotificationCompat.Action.Builder(
             R.drawable.taixu_notification,
-            "Disconnect",
+            "断开",
             disconnectPendingIntent,
         ).build()
     }
@@ -311,7 +311,7 @@ class AdbNotificationManager(
         )
         return NotificationCompat.Action.Builder(
             R.drawable.taixu_notification,
-            "Dismiss",
+            "关闭通知",
             dismissPendingIntent,
         ).build()
     }
@@ -330,7 +330,7 @@ class AdbNotificationManager(
         )
         return NotificationCompat.Action.Builder(
             R.drawable.taixu_notification,
-            "Open Workbench",
+            "打开工作台",
             openPendingIntent,
         ).build()
     }

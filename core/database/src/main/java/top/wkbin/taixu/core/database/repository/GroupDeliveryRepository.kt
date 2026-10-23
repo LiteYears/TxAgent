@@ -17,7 +17,7 @@ interface GroupDeliveryRepository {
     suspend fun admitDelivery(id: String, sessionId: String, taskId: String?): Boolean
     suspend fun finishDelivery(id: String, status: String, error: String? = null)
     suspend fun recoverDeliveries()
-    suspend fun recoverOrphanStreams(notice: String = "⚠️ Group reply was interrupted due to process exit, result pending verification")
+    suspend fun recoverOrphanStreams(notice: String = "⚠️ 群聊回复因进程退出中断，结果待核对")
     suspend fun cancelDeliveries(groupId: String)
 }
 

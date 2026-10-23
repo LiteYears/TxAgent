@@ -53,12 +53,12 @@ class AgentMcpForegroundService : Service() {
                     lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 },
             )
-        }.onFailure { Log.w(TAG, "Failed to create notification channel", it) }
+        }.onFailure { Log.w(TAG, "创建通知渠道失败", it) }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         runCatching { startForeground(NOTIFICATION_ID, notification()) }
-            .onFailure { Log.w(TAG, "startForeground failed", it) }
+            .onFailure { Log.w(TAG, "startForeground 失败", it) }
         acquireLease()
         return START_STICKY
     }
@@ -112,7 +112,7 @@ class AgentMcpForegroundService : Service() {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
                 PackageManager.PERMISSION_GRANTED
             ) {
-                Log.w(TAG, "Notification permission not granted, skipping MCP foreground service")
+                Log.w(TAG, "通知权限未授权，跳过 MCP 被控端前台保活服务")
                 return
             }
             runCatching {
@@ -120,13 +120,13 @@ class AgentMcpForegroundService : Service() {
                     context,
                     Intent(context, AgentMcpForegroundService::class.java),
                 )
-            }.onFailure { Log.w(TAG, "Failed to start MCP foreground service", it) }
+            }.onFailure { Log.w(TAG, "启动 MCP 被控端前台服务失败", it) }
         }
 
         /** 停止常驻服务。用 stopService 而非 startService+ACTION：后台态下也可安全调用。 */
         fun stop(context: Context) {
             runCatching { context.stopService(Intent(context, AgentMcpForegroundService::class.java)) }
-                .onFailure { Log.w(TAG, "Failed to stop MCP foreground service", it) }
+                .onFailure { Log.w(TAG, "停止 MCP 被控端前台服务失败", it) }
         }
     }
 }

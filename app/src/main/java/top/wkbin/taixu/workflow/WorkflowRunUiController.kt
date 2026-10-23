@@ -50,11 +50,11 @@ class WorkflowRunUiController(
 
     private fun publish(state: WorkflowRuntimeState) {
         when (state.status) {
-            WorkflowRunStatus.SUCCESS -> hud.finish(true, "All nodes completed")
-            WorkflowRunStatus.FAILED -> hud.finish(false, state.error ?: "Workflow failed")
+            WorkflowRunStatus.SUCCESS -> hud.finish(true, "全部节点完成")
+            WorkflowRunStatus.FAILED -> hud.finish(false, state.error ?: "工作流失败")
             WorkflowRunStatus.CANCELLED -> {
                 if (!hud.isStopRequested(state.executionId)) {
-                    hud.cancelled(state.error ?: "Cancelled")
+                    hud.cancelled(state.error ?: "已取消")
                 }
             }
             else -> {
@@ -64,7 +64,7 @@ class WorkflowRunUiController(
                 val title = active?.let { (id, _) ->
                     state.definition.nodes.firstOrNull { it.id == id }?.title ?: id
                 }.orEmpty()
-                val message = active?.value?.progressMessage?.takeIf { it.isNotBlank() } ?: "Running"
+                val message = active?.value?.progressMessage?.takeIf { it.isNotBlank() } ?: "运行中"
                 hud.updateNode(title, message)
             }
         }

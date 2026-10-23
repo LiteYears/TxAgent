@@ -127,10 +127,10 @@ class AgentSkillRepository(
                 ?: markdown.lineSequence().firstOrNull { it.startsWith("# ") }?.removePrefix("# ")?.trim()
                 ?: dir.name,
             description = metadata["description"]?.takeIf { it.isNotBlank() }
-                ?.take(MAX_DESCRIPTION_CHARS) ?: "Skill auto-discovered from directory",
-            systemPrompt = markdown + "\n\n[Skill Resource Directory] $guestPath\nTo execute scripts accompanying this Skill, verify their arguments before executing from this directory.",
+                ?.take(MAX_DESCRIPTION_CHARS) ?: "从目录自动发现的 Skill",
+            systemPrompt = markdown + "\n\n【Skill 资源目录】$guestPath\n如需执行该 Skill 附带的脚本，请先检查脚本内容与参数，再从此目录调用。",
             isBuiltin = false,
-            category = "Custom",
+            category = "自定义",
             resourcePath = dir.absolutePath,
         )
         dao.upsert(skill.toEntity())

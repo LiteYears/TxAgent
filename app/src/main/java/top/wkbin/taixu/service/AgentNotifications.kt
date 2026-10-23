@@ -43,9 +43,9 @@ internal class AgentNotifications(private val context: Context) {
 
     fun settled(sessionId: String, title: String, state: SessionRunState, status: String?, allowReply: Boolean = true): Notification {
         val outcome = when (state) {
-            SessionRunState.COMPLETED -> "Task completed"
-            SessionRunState.FAILED -> "Execution failed"
-            else -> "Stopped, review results"
+            SessionRunState.COMPLETED -> "任务已完成"
+            SessionRunState.FAILED -> "执行失败"
+            else -> "已停止，结果待核对"
         }
         val builder = base("$title · $outcome", status?.take(240)?.takeIf { it.isNotBlank() } ?: outcome, sessionId)
             .setOngoing(false).setAutoCancel(true).setCategory(NotificationCompat.CATEGORY_MESSAGE)

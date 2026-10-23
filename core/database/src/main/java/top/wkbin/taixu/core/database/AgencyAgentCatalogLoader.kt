@@ -85,8 +85,15 @@ class AgencyAgentCatalogLoader(
         }.also { cachedCatalog = it }
     }
 
-    /** Catalog localization: always English. */
-    internal suspend fun localization(): Map<String, AgentSubagentLocalization> = emptyMap()
+    /** 中文界面文案；资产缺失时回退英文目录，不阻塞市场加载。 */
+    internal suspend fun localization(): Map<String, AgentSubagentLocalization> =
+        cachedLocalization ?: loadMutex.withLock {
+            cachedLocalization ?: withContext(Dispatchers.IO) {
+                runCatching {
+                    readJson<AgencyLocalizationAsset>(LOCALIZATION_ASSET).agents
+                }.getOrDefault(emptyMap())
+            }.also { cachedLocalization = it }
+        }
 
     private suspend fun source(): AgencyCatalogSource = cachedSource ?: loadMutex.withLock {
         cachedSource ?: withContext(Dispatchers.IO) {

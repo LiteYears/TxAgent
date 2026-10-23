@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import java.io.FileInputStream
 import java.security.MessageDigest
 import java.util.Properties
@@ -31,7 +32,7 @@ extensions.configure<ApplicationExtension> {
         versionCode = appVersionCode
         versionName = appVersionName
         // 应用名统一走 manifest placeholder：TaiXuDev 构建显示 "TaiXuDev"，其余显示 "太墟"。
-        manifestPlaceholders["appLabel"] = if (taiXuDevBuild) "TaiXuDev" else "TaiXu"
+        manifestPlaceholders["appLabel"] = if (taiXuDevBuild) "TaiXuDev" else "太墟"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += "arm64-v8a"
@@ -69,12 +70,6 @@ extensions.configure<ApplicationExtension> {
     }
 
     signingConfigs {
-        create("debugConfig") {
-            storeFile = file("${rootDir}/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
         create("release") {
             if (signingConfigured) {
                 val storeFilePath = requireNotNull(signingStoreFilePath)
@@ -100,14 +95,12 @@ extensions.configure<ApplicationExtension> {
                 applicationIdSuffix = ".debug"
             }
             versionNameSuffix = if (taiXuDevBuild) "-dev" else "-debug"
-            signingConfig = if (signingConfigured) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debugConfig")
+            if (signingConfigured) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
         release {
-            manifestPlaceholders["appLabel"] = if (taiXuDevBuild) "TaiXuDev" else "TaiXu"
+            manifestPlaceholders["appLabel"] = if (taiXuDevBuild) "TaiXuDev" else "太墟"
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -295,6 +288,15 @@ tasks.configureEach {
                 "libpty_native.so is linked against glibc (libc.so.6). Rebuild it with the NDK " +
                     "aarch64-linux-android clang (see app/src/main/cpp/CMakeLists.txt)."
             }
+        }
+    }
+}
+
+extensions.configure<ApplicationAndroidComponentsExtension> {
+    onVariants { variant ->
+        val buildAppName = "taixu-v${appVersionName}-${variant.name}.apk"
+        variant.outputs.forEach { output ->
+            output.outputFileName.set(buildAppName)
         }
     }
 }

@@ -19,8 +19,8 @@ interface BotAssignmentRepository : IndependentAssignmentRepository {
         finishedAt: Long = System.currentTimeMillis(),
     )
 
-    /** Clean up RUNNING records to failed after restart to avoid infinite executing status. */
-    suspend fun failRunning(now: Long = System.currentTimeMillis(), error: String = "Process exited, original results pending verification. Please check session artifacts.")
+    /** 进程重启后把遗留的 RUNNING 记录收敛为失败，避免工作面板永久显示“执行中”。 */
+    suspend fun failRunning(now: Long = System.currentTimeMillis(), error: String = "进程已退出，原执行结果待核对；请检查原会话和产物，不要重复执行")
 
     suspend fun getBatch(id: String): BotWorkBatch?
 

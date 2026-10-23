@@ -52,7 +52,7 @@ class AgentForegroundService : Service() {
         super.onCreate()
         manager.createNotificationChannel(NotificationChannel(AgentNotifications.CHANNEL_ID,
             getString(R.string.taixu_agent_notification_channel), NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "Shows execution stage, tool steps, and elapsed time for tasks"
+            description = "展示每个任务的执行阶段、工具步骤和已用时"
             enableVibration(false)
             setSound(null, null)
         })
@@ -75,8 +75,8 @@ class AgentForegroundService : Service() {
         // Starting can precede the run-state emission (including RemoteInput). Allow admission to settle.
         if (!collecting) {
             runCatching { startForeground(AgentNotifications.SUMMARY_ID,
-                notifications.running(null, "TaiXu Task", "Preparing to execute…", System.currentTimeMillis())) }
-                .onFailure { Log.w(TAG, "Failed to start Agent foreground notification", it) }
+                notifications.running(null, "太墟任务", "正在准备执行…", System.currentTimeMillis())) }
+                .onFailure { Log.w(TAG, "启动 Agent 前台通知失败", it) }
             collecting = true
             scope.launch {
                 combine(harnessLoop.sessionRunStates, harnessLoop.sessionStatuses) { states, statuses -> states to statuses }
@@ -135,22 +135,22 @@ class AgentForegroundService : Service() {
             val state = states[id]?.takeIf { it in NOTIFIABLE_AGENT_STATES } ?: return@mapNotNull null
             val text = agentNotificationProgress(state, statuses[id], harnessLoop.messagesForSession(id).value)
             val elapsed = ((System.currentTimeMillis() - started.getValue(id)) / 1000).coerceAtLeast(0)
-            val progress = "Elapsed ${elapsed / 60}m ${elapsed % 60}s · $text"
+            val progress = "已用时 ${elapsed / 60}分${elapsed % 60}秒 · $text"
             publish(id, AgentNotifications.SESSION_ID,
                 notifications.running(id, titles[id].orEmpty(), progress, started.getValue(id), state == SessionRunState.WAITING_APPROVAL))
-            "${titles[id]}: $text"
+            "${titles[id]}：$text"
         }
         if (lines.isEmpty()) return
         val running = started.keys.count { states[it] == SessionRunState.RUNNING }
         val waiting = started.keys.count { states[it] == SessionRunState.WAITING_APPROVAL }
         publish(null, AgentNotifications.SUMMARY_ID, notifications.running(null,
-            "TaiXu · $running running / $waiting waiting for approval", lines.take(6).joinToString("\n\n"),
+            "太墟 · $running 个执行中 / $waiting 个等待批准", lines.take(6).joinToString("\n\n"),
             started.values.minOrNull() ?: System.currentTimeMillis(), running == 0))
     }
 
     private fun publish(tag: String?, id: Int, notification: Notification) {
         runCatching { manager.notify(tag, id, notification) }
-            .onFailure { Log.w(TAG, "Failed to publish Agent progress notification", it) }
+            .onFailure { Log.w(TAG, "发布 Agent 进度通知失败", it) }
     }
     private fun releaseLease() { lease?.close(); lease = null }
     override fun onBind(intent: Intent?): IBinder? = null
@@ -171,12 +171,12 @@ class AgentForegroundService : Service() {
         fun start(context: Context, sessionId: String? = null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(
                     context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "Notification permission not granted, please enable task notifications")
+                Log.w(TAG, "通知权限未授权，请在权限引导中开启任务通知")
                 return
             }
             runCatching { context.startForegroundService(Intent(context, AgentForegroundService::class.java)
                 .setAction(ACTION_START).putExtra(EXTRA_SESSION_ID, sessionId)) }
-                .onFailure { Log.w(TAG, "Failed to start Agent foreground service", it) }
+                .onFailure { Log.w(TAG, "启动 Agent 前台服务失败", it) }
         }
         fun startFromReply(context: Context, sessionId: String? = null) = start(context, sessionId)
     }

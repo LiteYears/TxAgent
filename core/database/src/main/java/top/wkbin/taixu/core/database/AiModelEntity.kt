@@ -88,8 +88,8 @@ interface AiModelDao {
     /** Imported records and activation flags commit together; concurrent edits require a fresh preview. */
     @Transaction
     suspend fun importBatch(expected: List<AiModelEntity>, models: List<AiModelEntity>) {
-        check(listAll().associateBy { it.id } == expected.associateBy { it.id }) { "Model profiles changed, please preview again before importing" }
-        require(models.map { it.id }.distinct().size == models.size) { "Duplicate model profile IDs found in import" }
+        check(listAll().associateBy { it.id } == expected.associateBy { it.id }) { "模型档案已变化，请重新预览后导入" }
+        require(models.map { it.id }.distinct().size == models.size) { "导入档案 ID 重复" }
         models.forEach { upsert(it) }
     }
 

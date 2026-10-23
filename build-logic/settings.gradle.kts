@@ -1,17 +1,55 @@
 pluginManagement {
-    val useOfficialRepos = true
+    val useOfficialRepos = System.getenv("CI") == "true" ||
+        providers.gradleProperty("useOfficialRepos").orNull == "true" ||
+        System.getenv("USE_OFFICIAL_REPOS") == "true"
     repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
+        if (useOfficialRepos) {
+            google()
+            mavenCentral()
+            gradlePluginPortal()
+        } else {
+            gradlePluginPortal()
+            maven {
+                url = uri("https://maven.aliyun.com/repository/google")
+                isAllowInsecureProtocol = false
+            }
+            maven {
+                url = uri("https://maven.aliyun.com/repository/central")
+            }
+            maven {
+                url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+            }
+            maven {
+                url = uri("https://maven.aliyun.com/repository/public")
+            }
+            google()
+            mavenCentral()
+        }
     }
 }
 
 dependencyResolutionManagement {
-    val useOfficialRepos = true
+    val useOfficialRepos = System.getenv("CI") == "true" ||
+        providers.gradleProperty("useOfficialRepos").orNull == "true" ||
+        System.getenv("USE_OFFICIAL_REPOS") == "true"
     repositories {
-        google()
-        mavenCentral()
+        if (useOfficialRepos) {
+            google()
+            mavenCentral()
+        } else {
+            maven {
+                url = uri("https://maven.aliyun.com/repository/google")
+                isAllowInsecureProtocol = false
+            }
+            maven {
+                url = uri("https://maven.aliyun.com/repository/central")
+            }
+            maven {
+                url = uri("https://maven.aliyun.com/repository/public")
+            }
+            google()
+            mavenCentral()
+        }
     }
     versionCatalogs {
         create("libs") {

@@ -2,12 +2,8 @@
 .gradle/
 .kotlin/
 **/build/
-
-# Android APK binaries and build outputs (prevent exceeding GitHub 50MB/100MB push limits)
-*.apk
-*.aab
-apk/
-.build-outputs/
+!runtime/src/main/java/top/wkbin/taixu/runtime/build/
+!runtime/src/main/java/top/wkbin/taixu/runtime/build/*.kt
 
 # Android Studio / IntelliJ
 .idea/
@@ -26,7 +22,6 @@ local.properties
 # Signing credentials and service configuration
 *.jks
 *.keystore
-debug.keystore.base64
 keystore.properties
 google-services.json
 

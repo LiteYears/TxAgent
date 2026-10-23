@@ -39,7 +39,7 @@ sealed interface TranslationModelStatus {
         val progress: Float? = null,
         val step: Int = 1,
         val totalSteps: Int = 2,
-        val stepName: String = "Offline language model package",
+        val stepName: String = "离线语言模型包",
         val downloadedBytes: Long = 0L,
         val totalBytes: Long = 0L,
     ) : TranslationModelStatus {
@@ -51,9 +51,9 @@ sealed interface TranslationModelStatus {
                     val pct = ((downloadedBytes.toDouble() / totalBytes) * 100).toInt().coerceIn(0, 100)
                     "$dlMb MB / $totMb MB ($pct%)"
                 } else if (progress != null) {
-                    "${((progress) * 100).toInt().coerceIn(0, 100)}% (Step $step/$totalSteps)"
+                    "${((progress) * 100).toInt().coerceIn(0, 100)}% (第 $step/$totalSteps 阶段)"
                 } else {
-                    "Step $step/$totalSteps (Connecting...)"
+                    "第 $step/$totalSteps 阶段 (连接中...)"
                 }
             }
     }
@@ -178,8 +178,8 @@ class TranslationManager(
             val zhDownloaded = runCatching { modelManager.isModelDownloaded(chineseModel).awaitResult() }.getOrDefault(false)
 
             val queue = mutableListOf<Pair<TranslateRemoteModel, String>>()
-            if (!enDownloaded) queue.add(englishModel to "English Language Model (en, ~30MB)")
-            if (!zhDownloaded) queue.add(chineseModel to "Chinese Language Model (zh, ~30MB)")
+            if (!enDownloaded) queue.add(englishModel to "英语语言模型 (en，约 30MB)")
+            if (!zhDownloaded) queue.add(chineseModel to "中文语言模型 (zh，约 30MB)")
 
             if (queue.isEmpty()) {
                 _status.value = TranslationModelStatus.Ready
@@ -198,10 +198,10 @@ class TranslationManager(
                     progress = baseProgress + 0.05f * stepWeight,
                     step = currentStep,
                     totalSteps = totalSteps,
-                    stepName = "Downloading $modelName",
+                    stepName = "正在下载 $modelName",
                 )
 
-                // Monitor progress
+                // 启动进度轮询与渐进平滑估算协程
                 val monitorJob = launch {
                     var simulatedIncrement = 0.05f
                     while (isActive) {
@@ -216,7 +216,7 @@ class TranslationManager(
                                 progress = overall,
                                 step = currentStep,
                                 totalSteps = totalSteps,
-                                stepName = "Downloading $modelName",
+                                stepName = "正在下载 $modelName",
                                 downloadedBytes = dl,
                                 totalBytes = tot,
                             )
@@ -229,7 +229,7 @@ class TranslationManager(
                                 progress = overall,
                                 step = currentStep,
                                 totalSteps = totalSteps,
-                                stepName = "Downloading $modelName",
+                                stepName = "正在下载 $modelName",
                                 downloadedBytes = 0L,
                                 totalBytes = 0L,
                             )
@@ -248,7 +248,7 @@ class TranslationManager(
                     progress = completedProgress,
                     step = currentStep,
                     totalSteps = totalSteps,
-                    stepName = "$modelName download complete",
+                    stepName = "$modelName 下载完成",
                 )
             }
 
@@ -257,7 +257,7 @@ class TranslationManager(
             Result.success(Unit)
         } catch (e: Exception) {
             appLogger.e("TranslationManager: Download translation models failed", e)
-            val msg = e.localizedMessage ?: "Download failed. Please check network connection and try again"
+            val msg = e.localizedMessage ?: "下载失败，若网络受限请检查连接或代理设置后重试"
             _status.value = TranslationModelStatus.Error(msg)
             Result.failure(e)
         } finally {
@@ -276,13 +276,13 @@ class TranslationManager(
             Result.success(Unit)
         } catch (e: Exception) {
             appLogger.e("TranslationManager: Delete translation models failed", e)
-            val msg = e.localizedMessage ?: "Failed to delete model"
+            val msg = e.localizedMessage ?: "删除模型失败"
             _status.value = TranslationModelStatus.Error(msg)
             Result.failure(e)
         }
     }
 
-    /** Execute offline translation (English <-> other languages) */
+    /** 执行文本离线翻译（英文 -> 中文） */
     suspend fun translate(text: String): Result<String> = withContext(Dispatchers.IO) {
         if (text.isBlank()) return@withContext Result.success("")
 
@@ -297,7 +297,7 @@ class TranslationManager(
             if (enReady && zhReady) {
                 _status.value = TranslationModelStatus.Ready
             } else {
-                return@withContext Result.failure(IllegalStateException("Offline translation model is not downloaded yet"))
+                return@withContext Result.failure(IllegalStateException("离线翻译模型尚未下载"))
             }
         }
 

@@ -12,7 +12,7 @@ import java.io.OutputStream
 class PayloadTooLargeException(
     val maxBytes: Long,
     val actualBytesObserved: Long,
-    message: String = "Payload stream size exceeds maximum limit (allowed: ${maxBytes / 1024} KB, observed: ${actualBytesObserved / 1024} KB)",
+    message: String = "数据流大小超过上限（允许最大 ${maxBytes / 1024} KB，实际已达 ${actualBytesObserved / 1024} KB）",
 ) : IOException(message)
 
 /**
