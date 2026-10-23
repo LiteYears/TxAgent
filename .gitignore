@@ -26,6 +26,7 @@ local.properties
 # Signing credentials and service configuration
 *.jks
 *.keystore
+debug.keystore.base64
 keystore.properties
 google-services.json
 
