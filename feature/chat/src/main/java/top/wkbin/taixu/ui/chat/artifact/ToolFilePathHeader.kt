@@ -84,21 +84,25 @@ fun ToolFilePathHeader(
         }
     }
 
-    val activePreviewContent = remember(previewContent, fileInfo) {
-        if (!previewContent.isNullOrEmpty()) previewContent
-        else if (fileInfo != null && fileInfo.sizeBytes <= 1024 * 1024) {
-            runCatching { fileInfo.file.readText(Charsets.UTF_8) }.getOrNull()
-        } else null
+    val canPreview = remember(previewContent, fileInfo) {
+        !previewContent.isNullOrEmpty() ||
+            (fileInfo != null && fileInfo.sizeBytes in 1..ArtifactFileResolver.MAX_PREVIEW_BYTES)
     }
 
-    if (showPreviewSheet && !activePreviewContent.isNullOrEmpty()) {
-        ArtifactPreviewSheet(
-            title = defaultFileName,
-            content = activePreviewContent,
-            relativePath = path,
-            workspace = workspace,
-            onDismiss = { showPreviewSheet = false },
-        )
+    if (showPreviewSheet && canPreview) {
+        val activePreviewContent = remember(previewContent, fileInfo) {
+            if (!previewContent.isNullOrEmpty()) previewContent
+            else fileInfo?.file?.let { ArtifactFileResolver.readPreviewText(it) }
+        }
+        if (!activePreviewContent.isNullOrEmpty()) {
+            ArtifactPreviewSheet(
+                title = defaultFileName,
+                content = activePreviewContent,
+                relativePath = path,
+                workspace = workspace,
+                onDismiss = { showPreviewSheet = false },
+            )
+        }
     }
 
     Row(
@@ -160,7 +164,7 @@ fun ToolFilePathHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            if (!activePreviewContent.isNullOrEmpty()) {
+            if (canPreview) {
                 Surface(
                     color = Color(0xFF1B2C47),
                     shape = RoundedCornerShape(4.dp),

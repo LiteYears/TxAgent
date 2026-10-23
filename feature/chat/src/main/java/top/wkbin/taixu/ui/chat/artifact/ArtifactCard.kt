@@ -49,7 +49,7 @@ fun ArtifactCard(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val fileInfo = remember(artifact.path, workspace) {
+    val fileInfo = remember(artifact.path, artifact.bytes, artifact.sha256, workspace) {
         ArtifactFileResolver.resolveFileInfo(context, artifact.path, workspace)
     }
 
@@ -95,10 +95,10 @@ fun ArtifactCard(
         }
     }
 
-    // Preview Sheet for text/markdown files
-    if (showPreviewSheet && file != null && file.exists()) {
-        val previewContent = remember(file) {
-            runCatching { file.readText(Charsets.UTF_8) }.getOrNull().orEmpty()
+    // Preview Sheet for text/markdown files (bounded to MAX_PREVIEW_BYTES)
+    if (showPreviewSheet && fileInfo != null && ArtifactFileResolver.isPreviewableTextFile(fileInfo)) {
+        val previewContent = remember(fileInfo.file, fileInfo.sizeBytes, artifact.sha256) {
+            ArtifactFileResolver.readPreviewText(fileInfo.file).orEmpty()
         }
         ArtifactPreviewSheet(
             title = fileName,
@@ -243,8 +243,8 @@ fun ArtifactCard(
                         )
                     }
 
-                    // Preview Button (for text, markdown, or scripts)
-                    val isTextual = fileInfo?.extension in setOf("md", "txt", "json", "py", "sh", "kt", "java", "c", "cpp", "xml", "html", "yaml", "yml", "csv")
+                    // Preview Button (for text, markdown, or scripts within preview size limit)
+                    val isTextual = ArtifactFileResolver.isPreviewableTextFile(fileInfo)
                     if (isTextual) {
                         RuntimeOutlinedButton(
                             onClick = { showPreviewSheet = true },

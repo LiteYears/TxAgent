@@ -41,9 +41,8 @@ class WorkspaceToolBackend(
                 read(operations, path, request.args, request.workspace, request.redactSearchLine)
             } else read(operations, path, request.args, request.workspace, request.redactSearchLine)
             HarnessTool.WRITE -> {
-                val content = JsonArgs.requireString(request.args, "content")
-                val existsBefore = operations.fileSizeOrNull(path) != null
-                snapshots.before(request.sessionId, operations, path)
+                val content = JsonArgs.requirePresentString(request.args, "content")
+                val existsBefore = snapshots.before(request.sessionId, operations, path)
                 currentCoroutineContext().ensureActive()
                 val written = operations.write(path, content)
                 currentCoroutineContext().ensureActive()
@@ -52,12 +51,14 @@ class WorkspaceToolBackend(
                 val metadata = mutableMapOf<String, String>()
                 if (written is AppResult.Success && relative != null) {
                     val contentBytes = content.toByteArray(Charsets.UTF_8)
-                    val digest = MessageDigest.getInstance("SHA-256").digest(contentBytes).joinToString("") { "%02x".format(it) }
-                    val origin = if (existsBefore) FileArtifactOrigin.CHANGED_AFTER_COMMAND else FileArtifactOrigin.NEW_AFTER_COMMAND
-                    val artifact = ToolFileArtifacts.observation(
-                        relative, FileFingerprint(digest, contentBytes.size.toLong()), origin, System.currentTimeMillis()
-                    )
-                    metadata[ToolFileArtifacts.METADATA_KEY] = ToolFileArtifacts.encode(listOf(artifact), complete = true)
+                    if (contentBytes.size.toLong() in 1..top.wkbin.taixu.runtime.environment.MAX_FILE_FINGERPRINT_BYTES) {
+                        val digest = MessageDigest.getInstance("SHA-256").digest(contentBytes).joinToString("") { "%02x".format(it) }
+                        val origin = if (existsBefore) FileArtifactOrigin.CHANGED_AFTER_COMMAND else FileArtifactOrigin.NEW_AFTER_COMMAND
+                        val artifact = ToolFileArtifacts.observation(
+                            relative, FileFingerprint(digest, contentBytes.size.toLong()), origin, System.currentTimeMillis()
+                        )
+                        metadata[ToolFileArtifacts.METADATA_KEY] = ToolFileArtifacts.encode(listOf(artifact), complete = true)
+                    }
                 }
                 if (written is AppResult.Success) {
                     WorkspaceToolOutcome(true, "已写入 $path\nDIFF_STAT: +${content.lines().size} -0", metadata)
@@ -67,7 +68,7 @@ class WorkspaceToolBackend(
             }
             HarnessTool.EDIT -> {
                 val oldText = JsonArgs.requireString(request.args, "oldText")
-                val newText = JsonArgs.requireString(request.args, "newText")
+                val newText = JsonArgs.requirePresentString(request.args, "newText")
                 snapshots.before(request.sessionId, operations, path)
                 currentCoroutineContext().ensureActive()
                 val edited = operations.editDetailed(path, oldText, newText)
@@ -79,7 +80,7 @@ class WorkspaceToolBackend(
                     val relative = ToolFileArtifacts.relativePath(path, request.workspace)
                     if (relative != null) {
                         val fingerprint = operations.fingerprint(path).getOrNull()
-                        if (fingerprint != null) {
+                        if (fingerprint != null && fingerprint.bytes in 1..top.wkbin.taixu.runtime.environment.MAX_FILE_FINGERPRINT_BYTES) {
                             val artifact = ToolFileArtifacts.observation(
                                 relative, fingerprint, FileArtifactOrigin.CHANGED_AFTER_COMMAND, System.currentTimeMillis()
                             )
@@ -119,7 +120,8 @@ class WorkspaceToolBackend(
                 val base64 = Base64.getEncoder().encodeToString(bytes.data)
                 val relative = ToolFileArtifacts.relativePath(path, workspace)
                 val digest = MessageDigest.getInstance("SHA-256").digest(bytes.data).joinToString("") { "%02x".format(it) }
-                val snapshots = relative?.let { listOf(ToolFileArtifacts.observation(it, FileFingerprint(digest, bytes.data.size.toLong()),
+                val snapshots = relative?.takeIf { bytes.data.size.toLong() in 1..top.wkbin.taixu.runtime.environment.MAX_FILE_FINGERPRINT_BYTES }
+                    ?.let { listOf(ToolFileArtifacts.observation(it, FileFingerprint(digest, bytes.data.size.toLong()),
                     FileArtifactOrigin.IMAGE_READ, System.currentTimeMillis())) }.orEmpty()
                 WorkspaceToolOutcome(
                     true, "已读取图片文件 $path（${bytes.data.size} 字节，$mime）。" +
@@ -127,7 +129,7 @@ class WorkspaceToolBackend(
                         "若这是虚拟屏截图，点击坐标用 0–1000 相对位置，不要用图上的像素。" +
                         "若当前模型不支持视觉，请改用文字/脚本方式描述图片内容。",
                     mapOf("image_payload" to imagePayload("data:$mime;base64,$base64"),
-                        ToolFileArtifacts.METADATA_KEY to ToolFileArtifacts.encode(snapshots, snapshots.isNotEmpty() && bytes.data.isNotEmpty())),
+                        ToolFileArtifacts.METADATA_KEY to ToolFileArtifacts.encode(snapshots, snapshots.isNotEmpty())),
                 )
             }
             is AppResult.Failure -> bytes.output(actionName = "read")

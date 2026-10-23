@@ -22,50 +22,83 @@ data class ArtifactFileInfo(
  */
 object ArtifactFileResolver {
 
+    const val MAX_PREVIEW_BYTES: Long = 1024L * 1024L
+
+    private val TEXTUAL_EXTENSIONS = setOf(
+        "md", "markdown", "txt", "log", "json", "py", "sh", "bash",
+        "kt", "kts", "java", "c", "cpp", "h", "rs", "go", "js", "ts",
+        "jsx", "tsx", "xml", "html", "htm", "yaml", "yml", "csv",
+    )
+
+    fun isPreviewableTextFile(info: ArtifactFileInfo?): Boolean {
+        if (info == null) return false
+        return info.extension in TEXTUAL_EXTENSIONS && info.sizeBytes in 0..MAX_PREVIEW_BYTES
+    }
+
+    fun readPreviewText(file: File, maxBytes: Long = MAX_PREVIEW_BYTES): String? {
+        if (maxBytes < 0L || !file.exists() || !file.isFile || !file.canRead()) return null
+        val length = file.length()
+        if (length < 0L || length > maxBytes) return null
+        return runCatching {
+            file.inputStream().use { input ->
+                val targetSize = length.toInt().coerceAtMost(maxBytes.toInt())
+                val buffer = ByteArray(targetSize)
+                var offset = 0
+                while (offset < targetSize) {
+                    val read = input.read(buffer, offset, targetSize - offset)
+                    if (read <= 0) break
+                    offset += read
+                }
+                String(buffer, 0, offset, Charsets.UTF_8)
+            }
+        }.getOrNull()
+    }
+
+    private fun verifyWithinDirectory(candidate: File, allowedDir: File): File? {
+        if (!candidate.exists() || !candidate.isFile || !candidate.canRead()) return null
+        val canonicalAllowed = runCatching { allowedDir.canonicalPath }.getOrNull() ?: return null
+        val canonicalCandidate = runCatching { candidate.canonicalFile }.getOrNull() ?: return null
+        if (!canonicalCandidate.exists() || !canonicalCandidate.isFile || !canonicalCandidate.canRead()) return null
+        return if (canonicalCandidate.path.startsWith(canonicalAllowed + File.separator)) canonicalCandidate else null
+    }
+
     /**
-     * Attempts to resolve a path to an existing, readable host file.
-     * Returns null if the file does not exist, is a directory, or cannot be read.
+     * Attempts to resolve a path to an existing, readable host file strictly within the runtime sandbox.
+     * Returns null if the file does not exist, is a directory, escapes the sandbox, or cannot be read.
      */
     fun resolveFile(context: Context, rawPath: String, workspace: String? = null): File? {
         val clean = rawPath.trim()
-        if (clean.isBlank()) return null
+        if (clean.isBlank() || clean.any { it.code < 32 || it == '\\' }) return null
 
         val baseDir = File(context.filesDir, "linux-runtime")
         val workspaceDir = File(baseDir, "workspace")
         val attachmentsDir = File(baseDir, "attachments")
         val tmpDir = File(baseDir, "tmp")
+        val distrosDir = File(baseDir, "distros")
+        val allowedRoots = listOf(workspaceDir, attachmentsDir, tmpDir, distrosDir)
 
-        // 1. Direct host path check (e.g. /data/data/top.wkbin.taixu/files/...)
+        // 1. Direct host path check (must canonically reside within an allowed runtime sandbox root)
         val directFile = File(clean)
-        if (directFile.isAbsolute && directFile.exists() && directFile.isFile && directFile.canRead()) {
-            return directFile
+        if (directFile.isAbsolute) {
+            allowedRoots.firstNotNullOfOrNull { verifyWithinDirectory(directFile, it) }?.let { return it }
         }
 
         // 2. /workspace/... guest path (mounted from baseDir/workspace)
         if (clean.startsWith("/workspace/")) {
             val sub = clean.removePrefix("/workspace/").trimStart('/')
-            val candidate = File(workspaceDir, sub)
-            if (candidate.exists() && candidate.isFile && candidate.canRead()) {
-                return candidate
-            }
+            verifyWithinDirectory(File(workspaceDir, sub), workspaceDir)?.let { return it }
         }
 
         // 3. /attachments/... guest path
         if (clean.startsWith("/attachments/")) {
             val sub = clean.removePrefix("/attachments/").trimStart('/')
-            val candidate = File(attachmentsDir, sub)
-            if (candidate.exists() && candidate.isFile && candidate.canRead()) {
-                return candidate
-            }
+            verifyWithinDirectory(File(attachmentsDir, sub), attachmentsDir)?.let { return it }
         }
 
         // 4. /tmp/... guest path
         if (clean.startsWith("/tmp/")) {
             val sub = clean.removePrefix("/tmp/").trimStart('/')
-            val candidate = File(tmpDir, sub)
-            if (candidate.exists() && candidate.isFile && candidate.canRead()) {
-                return candidate
-            }
+            verifyWithinDirectory(File(tmpDir, sub), tmpDir)?.let { return it }
         }
 
         // 5. Relative path inside the specified workspace
@@ -77,27 +110,28 @@ object ArtifactFileResolver {
 
         val normalizedRelative = clean.removePrefix("/workspace/").trimStart('/')
 
-        if (wsClean.isNotBlank()) {
-            val inWs = File(File(workspaceDir, wsClean), normalizedRelative)
-            if (inWs.exists() && inWs.isFile && inWs.canRead()) {
-                return inWs
+        if (wsClean.isNotBlank() && !clean.startsWith("/")) {
+            val wsRoot = File(workspaceDir, wsClean)
+            if (verifyWithinDirectory(wsRoot, workspaceDir) != null || wsRoot.canonicalPath.startsWith(workspaceDir.canonicalPath + File.separator)) {
+                verifyWithinDirectory(File(wsRoot, normalizedRelative), wsRoot)?.let { return it }
             }
         }
 
-        // 6. Direct child under workspace directory
-        val directWs = File(workspaceDir, normalizedRelative)
-        if (directWs.exists() && directWs.isFile && directWs.canRead()) {
-            return directWs
+        // 6. Direct child under workspace directory (for relative paths or /workspace/ paths)
+        if (!clean.startsWith("/") || clean.startsWith("/workspace/")) {
+            verifyWithinDirectory(File(workspaceDir, normalizedRelative), workspaceDir)?.let { return it }
         }
 
-        // 7. Check installed distros (e.g. distros/ubuntu/...)
-        val distrosDir = File(baseDir, "distros")
+        // 7. Check installed distros (guest /root -> distro/home, guest /... -> distro/rootfs/...)
         if (distrosDir.exists()) {
             distrosDir.listFiles()?.filter { it.isDirectory }?.forEach { distro ->
-                val rootCandidate = File(distro, clean.trimStart('/'))
-                if (rootCandidate.exists() && rootCandidate.isFile && rootCandidate.canRead()) {
-                    return rootCandidate
+                if (clean.startsWith("/root/")) {
+                    val homeSub = clean.removePrefix("/root/").trimStart('/')
+                    verifyWithinDirectory(File(File(distro, "home"), homeSub), distro)?.let { return it }
                 }
+                val relFromRoot = clean.trimStart('/')
+                verifyWithinDirectory(File(File(distro, "rootfs"), relFromRoot), distro)?.let { return it }
+                verifyWithinDirectory(File(distro, relFromRoot), distro)?.let { return it }
             }
         }
 
