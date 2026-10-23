@@ -291,12 +291,3 @@ tasks.configureEach {
         }
     }
 }
-
-extensions.configure<ApplicationAndroidComponentsExtension> {
-    onVariants { variant ->
-        val buildAppName = "taixu-v${appVersionName}-${variant.name}.apk"
-        variant.outputs.forEach { output ->
-            output.outputFileName.set(buildAppName)
-        }
-    }
-}

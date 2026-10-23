@@ -49,7 +49,7 @@ internal fun Project.configureKotlinJvm() {
     }
 
     extensions.configure<KotlinJvmProjectExtension> {
-        jvmToolchain(17)
+        jvmToolchain(21)
         sourceSets.named("main") {
             kotlin.srcDir("src/main/java")
         }

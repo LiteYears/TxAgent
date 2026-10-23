@@ -16,7 +16,7 @@ internal class RoomGroupRoundRepository(
 
     override suspend fun updateRoundProgress(round: GroupRound) {
         check(dao.updateRoundProgress(round.id, round.slots.toSlotsJson(json), round.status.name, round.updatedAt) == 1) {
-            "Group round stopped or cleared, did not continue execution"
+            "群聊轮次已停止或清除，未继续执行"
         }
     }
 
@@ -27,7 +27,7 @@ internal class RoomGroupRoundRepository(
 
     override suspend fun finishRound(round: GroupRound) {
         check(dao.finishRound(round.id, round.slots.toSlotsJson(json), round.status.name, round.updatedAt) == 1) {
-            "Group round stopped or cleared, did not overwrite terminal state"
+            "群聊轮次已停止或清除，未覆盖终态"
         }
     }
 
