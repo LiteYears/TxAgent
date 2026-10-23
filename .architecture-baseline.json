@@ -24,7 +24,7 @@
         "feature/chat/src/main/java/top/wkbin/taixu/ui/chat/ChatToolCards.kt": 620,
         "feature/chat/src/main/java/top/wkbin/taixu/ui/chat/ChatViewModel.kt": 1555,
         "feature/chat/src/main/java/top/wkbin/taixu/ui/chat/ChatWorkbenchPanels.kt": 1490,
-        "feature/chat/src/main/java/top/wkbin/taixu/ui/chat/ToolDiffView.kt": 478,
+        "feature/chat/src/main/java/top/wkbin/taixu/ui/chat/ToolDiffView.kt": 307,
         "feature/chat/src/main/java/top/wkbin/taixu/ui/chat/artifact/ArtifactPreviewSheet.kt": 525,
         "feature/chat/src/main/java/top/wkbin/taixu/ui/chat/floating/FloatingChatView.kt": 656,
         "feature/components/src/main/java/top/wkbin/taixu/ui/components/MarkdownText.kt": 896,

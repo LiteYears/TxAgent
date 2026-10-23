@@ -1,0 +1,6 @@
+{
+  "name": "太墟",
+  "description": "Android Linux multi-distribution sandbox with AI Agent Harness and native PTY terminal",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
