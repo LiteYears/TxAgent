@@ -1,0 +1,37 @@
+{
+  "id": "dynamic_echo_demo",
+  "name": "Dynamically Append Echo Step",
+  "description": "Agent generates a proposal and executes after confirmation; requires model selection.",
+  "nodes": [
+    {
+      "id": "plan",
+      "type": "AGENT_INFERENCE",
+      "title": "Propose Echo Step",
+      "config": {
+        "prompt": "Return only a JSON proposal without calling any tools. Generate exactly one BASH_COMMAND node with id review.echo and command printf \"dynamic workflow confirmed\\\\n\"; generate an edge with id added_echo connecting from review's success port to review.echo. Top level must only contain nodes and edges.",
+        "resultSchema": "{\"properties\":{\"nodes\":{\"items\":{\"properties\":{\"config\":{\"properties\":{\"command\":{\"type\":\"string\"}},\"additionalProperties\":false,\"required\":[\"command\"],\"type\":\"object\"},\"id\":{\"type\":\"string\"},\"title\":{\"type\":\"string\"},\"type\":{\"enum\":[\"BASH_COMMAND\"],\"type\":\"string\"}},\"additionalProperties\":false,\"required\":[\"id\",\"type\",\"title\",\"config\"],\"type\":\"object\"},\"type\":\"array\"},\"edges\":{\"items\":{\"properties\":{\"fromPort\":{\"enum\":[\"success\"],\"type\":\"string\"},\"toNodeId\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"},\"fromNodeId\":{\"enum\":[\"review\"],\"type\":\"string\"}},\"additionalProperties\":false,\"required\":[\"id\",\"fromNodeId\",\"fromPort\",\"toNodeId\"],\"type\":\"object\"},\"type\":\"array\"}},\"additionalProperties\":false,\"required\":[\"nodes\",\"edges\"],\"type\":\"object\"}"
+      },
+      "canvasX": 40,
+      "canvasY": 40
+    },
+    {
+      "id": "review",
+      "type": "HUMAN_APPROVAL",
+      "title": "Review New Step",
+      "description": "Review command before confirming execution.",
+      "config": {
+        "expansionResultNode": "plan"
+      },
+      "canvasX": 300,
+      "canvasY": 40
+    }
+  ],
+  "edges": [
+    {
+      "fromPort": "success",
+      "toNodeId": "review",
+      "id": "plan_to_review",
+      "fromNodeId": "plan"
+    }
+  ]
+}

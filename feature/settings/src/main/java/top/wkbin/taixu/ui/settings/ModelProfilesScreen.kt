@@ -1,0 +1,296 @@
+package top.wkbin.taixu.ui.settings
+import top.wkbin.taixu.ui.components.previewOrNull
+import top.wkbin.taixu.ui.components.previewStateOf
+import org.koin.compose.viewmodel.koinViewModel
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.SecondaryTabRow
+import top.wkbin.taixu.ui.settings.LocalizedText as Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
+import top.wkbin.taixu.core.database.AiModelEntity
+import top.wkbin.taixu.core.model.AiModelProfileExport
+import top.wkbin.taixu.harness.ModelContextWindows
+import top.wkbin.taixu.ui.components.IconTile
+import top.wkbin.taixu.ui.components.ProviderBadge
+import top.wkbin.taixu.ui.components.RuntimeAlertDialog
+import top.wkbin.taixu.ui.components.RuntimeButton
+import top.wkbin.taixu.ui.components.RuntimeCard
+import top.wkbin.taixu.ui.components.RuntimeCircularProgressIndicator
+import top.wkbin.taixu.ui.components.RuntimeCheckbox
+import top.wkbin.taixu.ui.components.RuntimeIcon
+import top.wkbin.taixu.ui.components.RuntimeIconButton
+import top.wkbin.taixu.ui.components.RuntimeIconName
+import top.wkbin.taixu.ui.components.RuntimeOutlinedButton
+import top.wkbin.taixu.ui.components.RuntimeTextButton
+import top.wkbin.taixu.ui.components.RuntimeTopBar
+import java.util.Locale
+/**
+ * 模型档案管理全屏独立页面
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun ModelProfilesScreen(
+    onBack: () -> Unit,
+    onCreate: () -> Unit,
+    onEdit: (String) -> Unit,
+    viewModel: SettingsViewModel? = previewOrNull { koinViewModel() },
+) {
+    val models by viewModel?.models?.collectAsStateWithLifecycle() ?: previewStateOf(emptyList())
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var showImportDialog by remember { mutableStateOf(false) }
+    var showExportAllDialog by remember { mutableStateOf(false) }
+    var singleExportModel by remember { mutableStateOf<AiModelEntity?>(null) }
+    var modelPendingDelete by remember { mutableStateOf<AiModelEntity?>(null) }
+    var importing by remember { mutableStateOf(false) }
+    val emptyModelsToastText = resolveLegacyString("No model profiles to export")
+
+    val scrollBehavior = androidx.compose.material3.TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = {
+            RuntimeTopBar(
+                title = resolveLegacyString("模型档案"),
+                onBack = onBack,
+                scrollBehavior = scrollBehavior,
+                actions = {
+                    // 📥 导入按钮
+                    RuntimeIconButton(
+                        onClick = { showImportDialog = true },
+                        contentDescription = resolveLegacyString("Import Model Profiles"),
+                    ) {
+                        RuntimeIcon(
+                            name = RuntimeIconName.Download,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    // 📤 导出全部按钮
+                    RuntimeIconButton(
+                        onClick = {
+                            if (models.isEmpty()) {
+                                Toast.makeText(context, emptyModelsToastText, Toast.LENGTH_SHORT).show()
+                            } else {
+                                showExportAllDialog = true
+                            }
+                        },
+                        contentDescription = resolveLegacyString("Export All Model Profiles"),
+                    ) {
+                        RuntimeIcon(
+                            name = RuntimeIconName.OpenInNew,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        ModelProfilesContent(
+            modifier = top.wkbin.taixu.ui.components.runtimeScrollViewport(padding), bottomPadding = padding.calculateBottomPadding(),
+            models = models,
+            onCreate = onCreate,
+            onEdit = { model -> onEdit(model.id) },
+            onActivate = { arg0 -> viewModel?.setActiveModel(arg0) },
+            onDelete = { model -> modelPendingDelete = model },
+            onExportSingle = { model -> singleExportModel = model },
+        )
+    }
+
+    // 导入弹窗
+    if (showImportDialog) {
+        ModelImportDialog(
+            onDismiss = { showImportDialog = false },
+            importing = importing,
+            models = models,
+            parseProfiles = { raw -> viewModel?.parseProfilesFromJson(raw) ?: Result.failure(IllegalStateException()) },
+            onImportJson = { jsonStr, mode ->
+                if (importing) return@ModelImportDialog
+                importing = true
+                coroutineScope.launch {
+                    val result = viewModel?.importProfilesFromJson(jsonStr, mode)
+                    importing = false
+                    result?.fold(
+                        onSuccess = { count ->
+                            Toast.makeText(context, "Imported $count model profiles", Toast.LENGTH_SHORT).show()
+                            showImportDialog = false
+                        },
+                        onFailure = { _ ->
+                            Toast.makeText(context, "Import failed: Invalid JSON or profile configuration", Toast.LENGTH_LONG).show()
+                        }
+                    )
+                }
+            },
+        )
+    }
+
+    // 批量导出弹窗
+    if (showExportAllDialog) {
+        ModelExportDialog(
+            title = resolveLegacyString("Export Model Profiles"),
+            subtitle = "Export ${models.size} model profile configurations",
+            onDismiss = { showExportAllDialog = false },
+            onGenerateJson = { includeKeys ->
+                viewModel?.exportAllProfilesJson(includeKeys).orEmpty()
+            },
+        )
+    }
+
+    // 单项导出弹窗
+    singleExportModel?.let { targetModel ->
+        ModelExportDialog(
+            title = resolveLegacyString("Export Model Profile"),
+            subtitle = "Model: ${targetModel.name} (${targetModel.provider})",
+            defaultFileName = "taixu_model_${targetModel.name.replace(" ", "_")}.json",
+            onDismiss = { singleExportModel = null },
+            onGenerateJson = { includeKeys ->
+                viewModel?.exportSingleProfileJson(targetModel.id, includeKeys) ?: ""
+            },
+        )
+    }
+
+    // 删除确认弹窗
+    modelPendingDelete?.let { target ->
+        RuntimeAlertDialog(
+            onDismissRequest = { modelPendingDelete = null },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    RuntimeIcon(RuntimeIconName.Alert, Modifier.size(20.dp), MaterialTheme.colorScheme.error)
+                    Text("Delete Model Profile", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = { Text("Delete model profile '${target.name}'? Saved API keys for this profile will also be removed.") },
+            confirmButton = {
+                RuntimeButton(
+                    onClick = {
+                        viewModel?.deleteModel(target.id)
+                        modelPendingDelete = null
+                    },
+                ) {
+                    Text("Confirm Delete")
+                }
+            },
+            dismissButton = {
+                RuntimeTextButton(onClick = { modelPendingDelete = null }) {
+                    Text("取消")
+                }
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ModelProfilesContent(
+    modifier: Modifier, bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    models: List<AiModelEntity>,
+    onCreate: () -> Unit,
+    onEdit: (AiModelEntity) -> Unit,
+    onActivate: (String) -> Unit,
+    onDelete: (AiModelEntity) -> Unit,
+    onExportSingle: (AiModelEntity) -> Unit,
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = top.wkbin.taixu.ui.components.runtimeContentPadding(horizontal = 16.dp, top = 16.dp, bottom = 32.dp + bottomPadding),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            RuntimeButton(
+                onClick = onCreate,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                shape = RoundedCornerShape(50),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    RuntimeIcon(RuntimeIconName.Plus, Modifier.size(16.dp), MaterialTheme.colorScheme.onPrimary)
+                    Text("新增模型档案", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        if (models.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    IconTile(RuntimeIconName.Model, color = MaterialTheme.colorScheme.primary, size = 42.dp)
+                    Text("暂无模型档案", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Tap Add above or Import at the top right to configure OpenAI / DeepSeek / Claude / Local models",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
+        items(models, key = { it.id }) { model ->
+            ModelProfileCard(
+                model = model,
+                onEdit = { onEdit(model) },
+                onActivate = { onActivate(model.id) },
+                onDelete = { onDelete(model) },
+                onExport = { onExportSingle(model) },
+            )
+        }
+    }
+}

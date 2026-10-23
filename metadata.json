@@ -1,0 +1,6 @@
+{
+  "name": "TaiXu",
+  "description": "TaiXu: Linux sandbox and AI Agent harness for Android",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

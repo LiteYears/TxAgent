@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_title">Built-in Browser</string>
+    <string name="browser_co_browsing">Co-browsing</string>
+    <string name="browser_paused">Paused</string>
+    <string name="browser_snapshot">Snapshot</string>
+    <string name="browser_network_count">Network %1$d</string>
+    <string name="browser_no_tabs">No tabs</string>
+    <string name="browser_back_to_chat">Back to chat</string>
+    <string name="browser_no_call_stack">No call stack</string>
+    <string name="browser_paused_reason">Paused · %1$s</string>
+    <string name="browser_resume">Resume</string>
+    <string name="browser_back">Back</string>
+    <string name="browser_forward">Forward</string>
+    <string name="browser_refresh">Refresh</string>
+    <string name="browser_network_back">← Back</string>
+    <string name="browser_request_details">Request Details</string>
+    <string name="browser_network_timeline">Network Timeline</string>
+    <string name="browser_requests_count">Requests (%1$d)</string>
+    <string name="browser_hook_hits_count">Hook Hits (%1$d)</string>
+    <string name="browser_close">Close</string>
+    <string name="browser_no_requests">No captured records.\nResource requests will appear here after navigating. Installing hook rules (browser.hook_create) captures fetch/XHR status codes and bodies.</string>
+    <string name="browser_loading">Loading…</string>
+    <string name="browser_no_hooks">No hook hits.\nAfter installing hook rules (browser.hook_create), function calls, property accesses, WebSockets, and network rule hits will appear here in real time.</string>
+</resources>

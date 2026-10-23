@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "rtk-suite-offline",
+  "name": "RTK Terminal Command Optimizer",
+  "description": "Built-in Agent terminal command rewriting and optimization suite (ARM64 Linux offline package) to compress command outputs and save tokens.",
+  "dependencies": [],
+  "launchType": "command",
+  "version": "1.0.0",
+  "latestVersion": "1.0.0",
+  "enabled": true,
+  "publisher": "TaiXu",
+  "category": "DEVELOPER_TOOL",
+  "architectures": [
+    "ARM64"
+  ],
+  "permissions": [
+    "WORKSPACE_READ",
+    "WORKSPACE_WRITE"
+  ],
+  "updateStrategy": "REINSTALL",
+  "source": "LOCAL",
+  "offlineOnly": true,
+  "installMethod": "LOCAL_PACKAGE",
+  "installSteps": [
+    "/bin/sh \"$TAIXU_PLUGIN_PAYLOAD/scripts/install-rtk.sh\""
+  ],
+  "uninstallSteps": [
+    "/bin/sh \"$TAIXU_PLUGIN_PAYLOAD/scripts/uninstall-rtk.sh\""
+  ],
+  "verifyCommand": "/bin/sh \"$TAIXU_PLUGIN_PAYLOAD/scripts/verify-rtk.sh\"",
+  "launchCommand": "rtk --version",
+  "commandLinks": [
+    "rtk"
+  ],
+  "environment": {
+    "RTK_TEE": "0",
+    "XDG_CONFIG_HOME": "/opt/taixu/data/rtk/config",
+    "XDG_DATA_HOME": "/opt/taixu/data/rtk/data"
+  }
+}

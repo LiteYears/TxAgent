@@ -1,0 +1,39 @@
+{
+  "id": "staged_dynamic_demo",
+  "name": "Staged Dynamic Graph Expansion",
+  "description": "Prints diagnostic probe after first batch confirmed, then plans second batch from output; second batch confirmed separately.",
+  "defaultVariables": {
+    "FIRST_PROPOSAL": "{\"nodes\":[{\"id\":\"review.probe\",\"type\":\"BASH_COMMAND\",\"title\":\"Print Diagnostic Probe\",\"config\":{\"command\":\"printf 'probe complete\\\\n'\"},\"canvasX\":560,\"canvasY\":40},{\"id\":\"review.plan\",\"type\":\"AGENT_INFERENCE\",\"title\":\"Plan from Diagnostics\",\"config\":{\"prompt\":\"Return only JSON, no tools. Choose description for next echo step based on diagnostic output ${previous.output}. Generate exactly one BASH_COMMAND node with id review.next.finish, config.command printf command for diagnostic summary; generate an edge id finish_edge from review.next success port to review.next.finish. Top level must only contain nodes and edges.\",\"resultSchema\":\"{\\\"properties\\\":{\\\"nodes\\\":{\\\"items\\\":{\\\"properties\\\":{\\\"config\\\":{\\\"additionalProperties\\\":true,\\\"type\\\":\\\"object\\\"},\\\"id\\\":{\\\"type\\\":\\\"string\\\"},\\\"title\\\":{\\\"type\\\":\\\"string\\\"},\\\"type\\\":{\\\"enum\\\":[\\\"BASH_COMMAND\\\",\\\"AGENT_INFERENCE\\\",\\\"HUMAN_APPROVAL\\\"],\\\"type\\\":\\\"string\\\"},\\\"canvasX\\\":{\\\"type\\\":\\\"number\\\"},\\\"canvasY\\\":{\\\"type\\\":\\\"number\\\"}},\\\"additionalProperties\\\":false,\\\"required\\\":[\\\"id\\\",\\\"type\\\",\\\"title\\\",\\\"config\\\"],\\\"type\\\":\\\"object\\\"},\\\"type\\\":\\\"array\\\"},\\\"edges\\\":{\\\"items\\\":{\\\"properties\\\":{\\\"fromPort\\\":{\\\"enum\\\":[\\\"success\\\"],\\\"type\\\":\\\"string\\\"},\\\"toNodeId\\\":{\\\"type\\\":\\\"string\\\"},\\\"id\\\":{\\\"type\\\":\\\"string\\\"},\\\"fromNodeId\\\":{\\\"type\\\":\\\"string\\\"}},\\\"additionalProperties\\\":false,\\\"required\\\":[\\\"id\\\",\\\"fromNodeId\\\",\\\"fromPort\\\",\\\"toNodeId\\\"],\\\"type\\\":\\\"object\\\"},\\\"type\\\":\\\"array\\\"}},\\\"additionalProperties\\\":false,\\\"required\\\":[\\\"nodes\\\",\\\"edges\\\"],\\\"type\\\":\\\"object\\\"}\"},\"canvasX\":820,\"canvasY\":40},{\"id\":\"review.next\",\"type\":\"HUMAN_APPROVAL\",\"title\":\"Confirm Next Batch Steps\",\"config\":{\"expansionResultNode\":\"review.plan\"},\"canvasX\":1080,\"canvasY\":40}],\"edges\":[{\"id\":\"probe_edge\",\"toNodeId\":\"review.probe\",\"fromNodeId\":\"review\",\"fromPort\":\"success\"},{\"id\":\"next_plan_edge\",\"toNodeId\":\"review.plan\",\"fromNodeId\":\"review.probe\",\"fromPort\":\"success\"},{\"id\":\"next_review_edge\",\"toNodeId\":\"review.next\",\"fromNodeId\":\"review.plan\",\"fromPort\":\"success\"}]}"
+  },
+  "nodes": [
+    {
+      "id": "plan",
+      "type": "AGENT_INFERENCE",
+      "title": "Propose Stage 1 Steps",
+      "config": {
+        "prompt": "Return only the JSON proposal below without calling any tools, preserving variable references and node IDs: ${FIRST_PROPOSAL}",
+        "resultSchema": "{\"properties\":{\"nodes\":{\"items\":{\"properties\":{\"config\":{\"additionalProperties\":true,\"type\":\"object\"},\"id\":{\"type\":\"string\"},\"title\":{\"type\":\"string\"},\"type\":{\"enum\":[\"BASH_COMMAND\",\"AGENT_INFERENCE\",\"HUMAN_APPROVAL\"],\"type\":\"string\"},\"canvasX\":{\"type\":\"number\"},\"canvasY\":{\"type\":\"number\"}},\"additionalProperties\":false,\"required\":[\"id\",\"type\",\"title\",\"config\"],\"type\":\"object\"},\"type\":\"array\"},\"edges\":{\"items\":{\"properties\":{\"fromPort\":{\"enum\":[\"success\"],\"type\":\"string\"},\"toNodeId\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"},\"fromNodeId\":{\"type\":\"string\"}},\"additionalProperties\":false,\"required\":[\"id\",\"fromNodeId\",\"fromPort\",\"toNodeId\"],\"type\":\"object\"},\"type\":\"array\"}},\"additionalProperties\":false,\"required\":[\"nodes\",\"edges\"],\"type\":\"object\"}"
+      },
+      "canvasX": 40,
+      "canvasY": 40
+    },
+    {
+      "id": "review",
+      "type": "HUMAN_APPROVAL",
+      "title": "Confirm Stage 1 Steps",
+      "config": {
+        "expansionResultNode": "plan"
+      },
+      "canvasX": 300,
+      "canvasY": 40
+    }
+  ],
+  "edges": [
+    {
+      "id": "first_review_edge",
+      "toNodeId": "review",
+      "fromNodeId": "plan",
+      "fromPort": "success"
+    }
+  ]
+}

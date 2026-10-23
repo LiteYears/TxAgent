@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fgit_title">Branch Management</string>
+    <string name="fgit_loading">Loading repository…</string>
+    <string name="fgit_tab_branches">Branches</string>
+    <string name="fgit_tab_branches_count">Branches %1$d</string>
+    <string name="fgit_tab_commits">Commits</string>
+
+    <string name="fgit_not_repo_title">Current workspace is not a Git repository</string>
+    <string name="fgit_not_repo_hint">Run git init / git clone via agent, or select \"Import from Git\" when creating a project to manage branches and commits here</string>
+
+    <string name="fgit_pull">Pull</string>
+    <string name="fgit_push">Push</string>
+    <string name="fgit_detached">Detached HEAD</string>
+    <string name="fgit_dirty_count">%1$d changes</string>
+    <string name="fgit_no_remote">No origin remote configured</string>
+
+    <string name="fgit_local_branches">Local Branches (%1$d)</string>
+    <string name="fgit_remote_branches">Remote Branches (%1$d)</string>
+    <string name="fgit_new_branch">New Branch</string>
+    <string name="fgit_no_branches">No local branches</string>
+    <string name="fgit_current">Current</string>
+    <string name="fgit_branch_name">Branch Name</string>
+    <string name="fgit_create_branch_hint">Create new branch from current commit</string>
+    <string name="fgit_create_branch_from">Create new branch from %1$s</string>
+    <string name="fgit_create">Create</string>
+    <string name="fgit_delete_branch_title">Delete Branch</string>
+    <string name="fgit_delete_branch_confirm">Delete branch %1$s? Unmerged commits will be permanently lost.</string>
+    <string name="fgit_delete">Delete</string>
+    <string name="fgit_cancel">Cancel</string>
+
+    <string name="fgit_no_commits">No commit history</string>
+
+    <string name="fgit_shallow_title">Shallow Clone Repository</string>
+    <string name="fgit_shallow_hint">This project was imported with --depth 1 and only has the latest commit. Click \"Fetch Full History\" to fetch all commits and branches from remote (requires Git in sandbox).</string>
+    <string name="fgit_unshallow">Fetch Full History</string>
+    <string name="fgit_unshallow_running">Fetching history…</string>
+
+    <string name="fgit_tab_changes">Changes</string>
+    <string name="fgit_tab_changes_count">Changes %1$d</string>
+    <string name="fgit_no_changes">Working tree is clean, no pending changes</string>
+    <string name="fgit_staged_count">Staged %1$d / %2$d</string>
+    <string name="fgit_stage_all">Stage All</string>
+    <string name="fgit_staged">Staged</string>
+    <string name="fgit_message_placeholder">Commit message…</string>
+    <string name="fgit_ai_message">AI Generate</string>
+    <string name="fgit_commit_n">Commit (%1$d files)</string>
+    <string name="fgit_commit_no_staged">Commit (select files first)</string>
+    <string name="fgit_committing">Committing…</string>
+    <string name="fgit_commit_push">Commit &amp; Push</string>
+    <string name="fgit_unstage_all">Unstage All</string>
+    <string name="fgit_discard_title">Discard Changes</string>
+    <string name="fgit_discard_confirm">Discard changes in %1$s? Untracked files will be deleted and tracked files reverted to the latest commit.</string>
+    <string name="fgit_discard">Discard</string>
+    <string name="fgit_detail_loading">Loading commit details…</string>
+    <string name="fgit_push_preview_title">Push Preview</string>
+    <string name="fgit_push_preview_count">The following %1$d commit(s) will be pushed:</string>
+    <string name="fgit_push_preview_empty">No commits to push (local is up to date with remote).</string>
+    <string name="fgit_push_confirm">Confirm Push</string>
+
+    <string name="fgit_tab_tags">Tags</string>
+    <string name="fgit_tab_tags_count">Tags %1$d</string>
+    <string name="fgit_tags_title">Tags (%1$d)</string>
+    <string name="fgit_new_tag">New Tag</string>
+    <string name="fgit_no_tags">No tags</string>
+    <string name="fgit_create_tag_hint">Create tag on current commit; enter message for annotated tag, or leave empty for lightweight tag</string>
+    <string name="fgit_tag_name">Tag Name</string>
+    <string name="fgit_tag_message">Message (Optional)</string>
+    <string name="fgit_tag_message_placeholder">e.g. v1.0.0 release</string>
+    <string name="fgit_delete_tag_title">Delete Tag</string>
+    <string name="fgit_delete_tag_confirm">Delete tag %1$s?</string>
+
+    <string name="fgit_credentials_title">Git Remote Credentials</string>
+    <string name="fgit_credentials_hint">HTTPS push/pull requires a username and Personal Access Token (generated in GitHub/GitLab settings). Tokens are stored encrypted in Android Keystore.</string>
+    <string name="fgit_credentials_remote">Current Remote: %1$s</string>
+    <string name="fgit_host">Host (e.g. github.com)</string>
+    <string name="fgit_username">Username</string>
+    <string name="fgit_token">Personal Access Token</string>
+    <string name="fgit_token_placeholder">ghp_xxxxxxxx</string>
+    <string name="fgit_saved_hosts">Saved: %1$s</string>
+    <string name="fgit_save">Save</string>
+</resources>
